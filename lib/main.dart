@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 // Your original splash screen import
 import 'screens/splash_screen.dart';
-
+import 'screens/forgot_password.dart';
 // Added imports you will need for navigation
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/otp_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());   // You already had this
@@ -31,6 +33,9 @@ class MyApp extends StatelessWidget {
         '/onboarding': (_) => const OnboardingScreen(),
         '/login': (_) => LoginScreen(),
         '/register': (_) => RegisterScreen(),
+        '/password': (_) => PasswordRecoveryScreen(),
+        '/otp': (_) => OtpVerificationScreen(),
+        '/home': (_) => HomeScreen(),
       },
     );
   }
