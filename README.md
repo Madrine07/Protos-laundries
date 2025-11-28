@@ -17,6 +17,7 @@ samples, guidance on mobile development, and a full API reference.
 # Screen shot images
 
 ![alt text](splashscreen.png)
-![alt text](onboard1.png) ![alt text](onboard2.png) ![alt text](onboard3.png)
 
+![alt text](ob3.png) ![alt text](onb1.png) ![alt text](onb2.png)
 ![alt text](login.png) ![alt text](sinup.png) ![alt text](passwordrecover.png)  ![alt text](otpscreen.png) 
+
