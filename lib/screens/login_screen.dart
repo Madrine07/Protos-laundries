@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import 'dart:developer';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
-  // Controllers
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Form key
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // Notifiers
   final ValueNotifier<bool> passwordVisible = ValueNotifier(false);
   final ValueNotifier<bool> rememberMe = ValueNotifier(false);
   final ValueNotifier<String?> errorMessage = ValueNotifier(null);
 
-  void _signIn(BuildContext context) {
+  final ApiService api = ApiService();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    passwordVisible.dispose();
+    rememberMe.dispose();
+    errorMessage.dispose();
+    super.dispose();
+  }
+
+  void _signIn() async {
     errorMessage.value = null;
 
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
@@ -24,8 +40,37 @@ class LoginScreen extends StatelessWidget {
     }
 
     if (_formKey.currentState!.validate()) {
-      // Navigate to home on Sign In
-      Navigator.pushNamed(context, '/home');
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final response = await api.login(
+          emailController.text.trim(),
+          passwordController.text.trim(),
+        );
+
+        if (!mounted) return;
+        Navigator.of(context).pop();
+
+        final userRole = response["user"]["role"] ?? "customer";
+        log("User logged in with role: $userRole");
+
+        if (rememberMe.value) {
+          // Example: save token in SharedPreferences
+          // final prefs = await SharedPreferences.getInstance();
+          // await prefs.setString("token", response["token"]);
+        }
+
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        errorMessage.value = e.toString();
+        log("Login error: $e", name: "LoginScreen");
+      }
     }
   }
 
@@ -35,15 +80,13 @@ class LoginScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // --- HEADER WITH LOGO & GRADIENT ---
+            // --- Header ---
             Container(
               height: 120,
               width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF673AB7), Color(0xFF9C27B0)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
               ),
@@ -68,153 +111,152 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 60), // moves form slightly down
 
-            // --- FORM ---
+            // --- Form ---
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Error Message
+                      ValueListenableBuilder<String?>(
+                        valueListenable: errorMessage,
+                        builder: (context, value, _) {
+                          if (value == null) return const SizedBox();
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // Email & Password Fields
+                      _buildTextField("Email", Icons.email_outlined, emailController),
+                      const SizedBox(height: 16),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: passwordVisible,
+                        builder: (context, visible, _) {
+                          return _buildTextField(
+                            "Password",
+                            Icons.lock_outline,
+                            passwordController,
+                            obscureText: !visible,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                visible ? Icons.visibility : Icons.visibility_off,
+                                color: Colors.deepPurple,
+                              ),
+                              onPressed: () {
+                                passwordVisible.value = !passwordVisible.value;
+                              },
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // --- Remember Me + Forgot Password ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          ValueListenableBuilder<String?>(
-                            valueListenable: errorMessage,
-                            builder: (context, value, _) {
-                              if (value == null) return const SizedBox();
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Text(
-                                  value,
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                          _buildTextField(
-                            labelText: "Email",
-                            icon: Icons.email_outlined,
-                            controller: emailController,
-                          ),
-                          const SizedBox(height: 16),
-
+                          // Remember Me
                           ValueListenableBuilder<bool>(
-                            valueListenable: passwordVisible,
-                            builder: (context, visible, _) {
-                              return _buildTextField(
-                                labelText: "Password",
-                                icon: Icons.lock_outline,
-                                controller: passwordController,
-                                obscureText: !visible,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    visible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    color: Colors.deepPurple,
+                            valueListenable: rememberMe,
+                            builder: (context, value, _) {
+                              return Row(
+                                children: [
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: Checkbox(
+                                      value: value,
+                                      onChanged: (v) {
+                                        rememberMe.value = v ?? false;
+                                      },
+                                      activeColor: Colors.deepPurple,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
                                   ),
-                                  onPressed: () {
-                                    passwordVisible.value =
-                                        !passwordVisible.value;
-                                  },
-                                ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    "Remember Me",
+                                    style: TextStyle(
+                                      fontSize: 12, // smaller font
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               );
                             },
                           ),
-                          const SizedBox(height: 8),
 
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ValueListenableBuilder<bool>(
-                                valueListenable: rememberMe,
-                                builder: (context, value, _) {
-                                  return Row(
-                                    children: [
-                                      Checkbox(
-                                        value: value,
-                                        onChanged: (bool? v) {
-                                          rememberMe.value = v ?? false;
-                                        },
-                                      ),
-                                      const Text('Remember me'),
-                                    ],
-                                  );
-                                },
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/password');
-                                },
-                                child: const Text(
-                                  'Forgot password ?',
-                                  style: TextStyle(
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 5,
-                              ),
-                              onPressed: () => _signIn(context),
-                              child: const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
+                          // Forgot Password
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/password');
+                            },
+                            child: const Text(
+                              "Forgot Password?",
+                              style: TextStyle(
+                                fontSize: 12, // smaller font
+                                color: Colors.deepPurple,
                               ),
                             ),
                           ),
                         ],
                       ),
 
-                      // --- Bottom login area ---
-                      Column(
+                      const SizedBox(height: 16),
+
+                      // Sign In Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            "Sign In",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Sign Up link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 20),
-                          const Center(child: Text('Or Sign In with')),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Colors.white,
-                                child: Icon(Icons.g_mobiledata, size: 28),
+                          const Text("Don't have an account?"),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/register');
+                            },
+                            child: const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                color: Colors.deepPurple,
+                                fontWeight: FontWeight.bold,
                               ),
-                              SizedBox(width: 16),
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Colors.white,
-                                child: Icon(
-                                  Icons.facebook,
-                                  size: 28,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -223,67 +265,32 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // --- Bottom Sign Up Row ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Don't have an account?"),
-                TextButton(
-                  onPressed: () {
-                    // Navigate to register on Sign Up
-                    Navigator.pushNamed(context, '/register');
-                  },
-                  child: const Text('Sign Up'),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
 
-  // --- Styled TextField ---
-  Widget _buildTextField({
-    required String labelText,
-    required IconData icon,
-    required TextEditingController controller,
-    bool obscureText = false,
-    Widget? suffixIcon,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: labelText,
-          prefixIcon: Icon(icon, color: Colors.deepPurple),
-          filled: true,
-          fillColor: Colors.grey[200],
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-          suffixIcon: suffixIcon,
+  // --- Text Field Helper ---
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller,
+      {bool obscureText = false, Widget? suffixIcon}) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.deepPurple),
+        filled: true,
+        fillColor: Colors.grey[200],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return '$labelText is required';
-          }
-          return null;
-        },
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+        ),
+        suffixIcon: suffixIcon,
       ),
     );
   }

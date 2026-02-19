@@ -22,3 +22,14 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+plugins {
+    id "com.google.gms.google-services" version "4.4.0" apply false  // ← add this
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

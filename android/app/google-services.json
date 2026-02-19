@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "364294517278",
+    "project_id": "protos-laundries",
+    "storage_bucket": "protos-laundries.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:364294517278:android:84d21ba54edc1bdc09340f",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6mqv6hwAgtXSYb70JB0EmQXfXqma599Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

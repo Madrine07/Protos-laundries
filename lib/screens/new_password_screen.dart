@@ -1,32 +1,67 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'dart:developer';
-import 'otp_screen.dart'; // This is your existing OTP screen
 
-class PasswordRecoveryScreen extends StatefulWidget {
-  const PasswordRecoveryScreen({super.key});
+class NewPasswordScreen extends StatefulWidget {
+  final String email; // Email for which password is being reset
+  final String otp;   // OTP received from previous screen
+
+  const NewPasswordScreen({
+    required this.email,
+    required this.otp,
+    super.key,
+  });
 
   @override
-  State<PasswordRecoveryScreen> createState() => _PasswordRecoveryScreenState();
+  State<NewPasswordScreen> createState() => _NewPasswordScreenState();
 }
 
-class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
-  final TextEditingController emailController = TextEditingController();
+class _NewPasswordScreenState extends State<NewPasswordScreen> {
+  final TextEditingController newPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  final ValueNotifier<bool> newPasswordVisible = ValueNotifier(false);
+  final ValueNotifier<bool> confirmPasswordVisible = ValueNotifier(false);
   final ValueNotifier<String?> errorMessage = ValueNotifier(null);
+
   final ApiService api = ApiService();
 
   @override
   void dispose() {
-    emailController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    newPasswordVisible.dispose();
+    confirmPasswordVisible.dispose();
     errorMessage.dispose();
     super.dispose();
   }
 
-  void _sendOtp() async {
+  // --- Password strength checks ---
+  bool hasMinLength(String t) => t.length >= 8;
+  bool hasUpper(String t) => RegExp(r"[A-Z]").hasMatch(t);
+  bool hasLower(String t) => RegExp(r"[a-z]").hasMatch(t);
+  bool hasNumber(String t) => RegExp(r"[0-9]").hasMatch(t);
+  bool hasSymbol(String t) => RegExp(r"[!@#\$&*~^%]").hasMatch(t);
+
+  void _resetPassword() async {
     errorMessage.value = null;
 
-    if (emailController.text.isEmpty) {
-      errorMessage.value = "Please enter your email!";
+    final pw = newPasswordController.text.trim();
+    final confirmPw = confirmPasswordController.text.trim();
+
+    if (pw.isEmpty || confirmPw.isEmpty) {
+      errorMessage.value = "Please fill all fields!";
+      return;
+    }
+
+    if (pw != confirmPw) {
+      errorMessage.value = "Passwords do not match!";
+      return;
+    }
+
+    if (!(hasMinLength(pw) && hasUpper(pw) && hasLower(pw) && hasNumber(pw) && hasSymbol(pw))) {
+      errorMessage.value =
+          "Password must be at least 8 characters, include uppercase, lowercase, number, and symbol";
       return;
     }
 
@@ -38,29 +73,32 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     );
 
     try {
-      // Call your API service to send OTP for password recovery
-      await api.sendPasswordRecoveryOtp(emailController.text.trim());
+      // Call API to reset password
+      await api.resetPassword(
+        email: widget.email,
+        otp: widget.otp,
+        password: pw,
+        confirmPassword: confirmPw,
+      
+      );
 
       if (!mounted) return;
       Navigator.of(context).pop(); // hide spinner
 
-      // Navigate to OTP screen, passing email
+      // Show success and navigate back to login
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(
-            name: "", // for password recovery, name not needed
-            email: emailController.text.trim(),
-            password: "", // password will be reset later
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password reset successfully! Please login."),
+          backgroundColor: Colors.green,
         ),
       );
+      Navigator.popUntil(context, (route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(); // hide spinner
       errorMessage.value = e.toString();
-      log("Password recovery error: $e");
+      log("Reset password error: $e");
     }
   }
 
@@ -90,7 +128,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                   ),
                   const SizedBox(width: 12),
                   const Text(
-                    'Password Recovery',
+                    'Reset Password',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -128,33 +166,68 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       },
                     ),
 
-                    /// 🔹 ADDED TEXT (instruction)
+                    // Instruction text
                     const Text(
-                      "Please enter the email used for your account. "
-                      "We will send an OTP to reset your password.",
+                      "Enter your new password and confirm it below.",
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black54,
                       ),
                     ),
-
                     const SizedBox(height: 18),
 
-                    _buildTextField(
-                      "Email",
-                      Icons.email_outlined,
-                      emailController,
-                      keyboard: TextInputType.emailAddress,
+                    // New password field
+                    ValueListenableBuilder<bool>(
+                      valueListenable: newPasswordVisible,
+                      builder: (context, visible, _) {
+                        return _buildTextField(
+                          "New Password",
+                          Icons.lock_outline,
+                          newPasswordController,
+                          obscureText: !visible,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              visible ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.deepPurple,
+                            ),
+                            onPressed: () {
+                              newPasswordVisible.value = !newPasswordVisible.value;
+                            },
+                          ),
+                        );
+                      },
                     ),
+                    const SizedBox(height: 16),
 
+                    // Confirm password field
+                    ValueListenableBuilder<bool>(
+                      valueListenable: confirmPasswordVisible,
+                      builder: (context, visible, _) {
+                        return _buildTextField(
+                          "Confirm Password",
+                          Icons.lock_outline,
+                          confirmPasswordController,
+                          obscureText: !visible,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              visible ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.deepPurple,
+                            ),
+                            onPressed: () {
+                              confirmPasswordVisible.value = !confirmPasswordVisible.value;
+                            },
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 25),
 
-                    // Send OTP button
+                    // Reset password button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _sendOtp,
+                        onPressed: _resetPassword,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepPurple,
                           shape: RoundedRectangleBorder(
@@ -162,32 +235,10 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                           ),
                         ),
                         child: const Text(
-                          "Send OTP",
+                          "Continue",
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Back to login
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Remembered your password?"),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context); // back to login
-                          },
-                          child: const Text(
-                            "Sign In",
-                            style: TextStyle(
-                              color: Colors.deepPurple,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -203,11 +254,12 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     String label,
     IconData icon,
     TextEditingController controller, {
-    TextInputType keyboard = TextInputType.text,
+    bool obscureText = false,
+    Widget? suffixIcon,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: keyboard,
+      obscureText: obscureText,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.deepPurple),
@@ -221,6 +273,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
         ),
+        suffixIcon: suffixIcon,
       ),
     );
   }
