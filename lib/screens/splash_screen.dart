@@ -1,15 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key}); 
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -17,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // Fade-in animation for logo
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -29,13 +31,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    // Move to Onboarding after 3 seconds
     Timer(const Duration(seconds: 3), () {
+      _navigateNext();
+    });
+  }
+
+  Future<void> _navigateNext() async {
+    final prefs = await SharedPreferences.getInstance();
+    final authToken = prefs.getString('auth_token');
+
+    if (!mounted) return;
+
+    if (authToken != null) {
+      // Already logged in → go straight to home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    } else {
+      // New user → go to onboarding
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
-    });
+    }
   }
 
   @override
@@ -54,14 +73,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
               SizedBox(
                 height: 120,
-                child: Image.asset('images/final-no-background.png', fit: BoxFit.contain),
+                child: Image.asset(
+                  'images/final-no-background.png',
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(height: 20),
-
-              // App name
               const Text(
                 "Protos Laundries App",
                 style: TextStyle(
@@ -71,10 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   letterSpacing: 1.2,
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // Slogan
               const Text(
                 "Not for everyone, just for u",
                 style: TextStyle(
@@ -83,11 +99,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   fontStyle: FontStyle.italic,
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // Loader
-              const CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+              const CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
             ],
           ),
         ),

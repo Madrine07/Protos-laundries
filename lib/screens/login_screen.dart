@@ -1,6 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'dart:developer';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,47 +38,70 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _signIn() async {
-    errorMessage.value = null;
+  errorMessage.value = null;
 
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      errorMessage.value = "Please fill all fields!";
-      return;
-    }
+  if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+    errorMessage.value = "Please fill all fields!";
+    return;
+  }
 
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
+  if (_formKey.currentState!.validate()) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final response = await api.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
       );
 
-      try {
-        final response = await api.login(
-          emailController.text.trim(),
-          passwordController.text.trim(),
-        );
+      if (!mounted) return;
+      Navigator.of(context).pop();
 
-        if (!mounted) return;
-        Navigator.of(context).pop();
+      // ── Save token and user info always ──────────────
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', response['token']);
+      await prefs.setString('user_role', response['user']['role'] ?? 'customer');
+      await prefs.setInt('user_id', response['user']['id']);
 
-        final userRole = response["user"]["role"] ?? "customer";
-        log("User logged in with role: $userRole");
-
-        if (rememberMe.value) {
-          // Example: save token in SharedPreferences
-          // final prefs = await SharedPreferences.getInstance();
-          // await prefs.setString("token", response["token"]);
-        }
-
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-      } catch (e) {
-        if (!mounted) return;
-        Navigator.of(context).pop();
-        errorMessage.value = e.toString();
-        log("Login error: $e", name: "LoginScreen");
+      // ── Save FCM token to backend now that we're logged in ──
+      final fcmToken = prefs.getString('fcm_token_temp');
+      if (fcmToken != null) {
+        await _saveFcmTokenToBackend(fcmToken, response['token']);
       }
+
+      final userRole = response["user"]["role"] ?? "customer";
+      log("User logged in with role: $userRole");
+
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      errorMessage.value = e.toString();
+      log("Login error: $e", name: "LoginScreen");
     }
   }
+}
+
+Future<void> _saveFcmTokenToBackend(String fcmToken, String authToken) async {
+  try {
+    await http.post(
+      Uri.parse('http://127.0.0.1:8000/api/update-fcm-token'),
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'fcm_token': fcmToken}),
+    );
+  } catch (e) {
+    log('FCM token save error: $e');
+  }
+}
 
   @override
   Widget build(BuildContext context) {

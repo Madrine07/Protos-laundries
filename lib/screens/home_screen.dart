@@ -1,316 +1,7 @@
-// import 'package:flutter/material.dart';
-// import '../widgets/how_protos_works.dart';
 
-// class HomeScreen extends StatelessWidget {
-//   const HomeScreen({super.key});
-
-//   static const Color purple = Color(0xFF6A1B9A);
-//   static const Color lightPurple = Color(0xFFF3E8FF);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       bottomNavigationBar: _bottomNav(context),
-
-//       body: SafeArea(
-//         child: SingleChildScrollView(
-//           child: Column(
-//             children: [
-
-//               // ===================== TOP BAR =====================
-//               Padding(
-//                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-
-//                     Row(
-//                       children: [
-//                         Image.asset("images/noback.png", height: 26),
-//                         const SizedBox(width: 6),
-//                         RichText(
-//                           text: const TextSpan(
-//                             children: [
-//                               TextSpan(
-//                                 text: "Protos ",
-//                                 style: TextStyle(
-//                                   fontSize: 18,
-//                                   fontWeight: FontWeight.bold,
-//                                   color: purple,
-//                                 ),
-//                               ),
-//                               TextSpan(
-//                                 text: "Laundries",
-//                                 style: TextStyle(
-//                                   fontSize: 16,
-//                                   color: purple,
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-
-//                     GestureDetector(
-//                       onTap: () => Navigator.pushNamed(context, "/account"),
-//                       child: const Row(
-//                         children: [
-//                           Icon(Icons.person_outline),
-//                           SizedBox(width: 6),
-//                           Text("My Account")
-//                         ],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               // ===================== HERO =====================
-//               Container(
-//                 height: 120,
-//                 margin: const EdgeInsets.symmetric(horizontal: 16),
-//                 decoration: BoxDecoration(
-//                   color: lightPurple,
-//                   borderRadius: BorderRadius.circular(18),
-//                 ),
-//                 child: Row(
-//                   children: [
-
-//                     Expanded(
-//                       child: Padding(
-//                         padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: const [
-//                             Text(
-//                               "Laundry made easy",
-//                               style: TextStyle(
-//                                 fontSize: 16.5,
-//                                 fontWeight: FontWeight.w700,
-//                                 color: purple,
-//                                 height: 1.1,
-//                               ),
-//                             ),
-//                             Text(
-//                               "in Kampala",
-//                               style: TextStyle(height: 1.1),
-//                             ),
-//                             SizedBox(height: 6),
-//                             Text(
-//                               "We pick up, clean, and deliver your laundry to your door",
-//                               style: TextStyle(fontSize: 12.5, height: 1.2),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-
-//                     // IMAGE fills container properly
-//                     ClipRRect(
-//                       borderRadius: const BorderRadius.only(
-//                         topRight: Radius.circular(18),
-//                         bottomRight: Radius.circular(18),
-//                       ),
-//                       child: SizedBox(
-//                         height: double.infinity,
-//                         width: 130,
-//                         child: Image.asset(
-//                           "images/banner.png",
-//                           fit: BoxFit.cover,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 14),
-
-//               // ===================== BUTTONS =====================
-//               Padding(
-//                 padding: const EdgeInsets.symmetric(horizontal: 16),
-//                 child: Row(
-//                   children: [
-
-//                     Expanded(
-//                       child: ElevatedButton(
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: purple,
-//                           foregroundColor: Colors.white,
-//                           padding: const EdgeInsets.symmetric(vertical: 13),
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(14),
-//                           ),
-//                         ),
-//                         onPressed: () => Navigator.pushNamed(context, "/schedule"),
-//                         child: const Text("Schedule pickup"),
-//                       ),
-//                     ),
-
-//                     const SizedBox(width: 12),
-
-//                     Expanded(
-//                       child: Container(
-//                         decoration: BoxDecoration(
-//                           color: Colors.grey.shade100,
-//                           borderRadius: BorderRadius.circular(14),
-//                         ),
-//                         child: TextButton(
-//                           onPressed: () => Navigator.pushNamed(context, "/track"),
-//                           child: const Text(
-//                             "Track Order",
-//                             style: TextStyle(color: purple),
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 16),
-
-//               // ===================== QUICK ACTION STRIP =====================
-//               _quickActionsRow(context),
-
-//               const SizedBox(height: 18),
-
-//               // ===================== CAROUSEL =====================
-//               const HowItWorksCarousel(),
-
-//               const SizedBox(height: 18),
-
-//               // ===================== PRICE CARD =====================
-//               Container(
-//                 margin: const EdgeInsets.symmetric(horizontal: 16),
-//                 padding: const EdgeInsets.all(16),
-//                 decoration: BoxDecoration(
-//                   color: Colors.grey.shade50,
-//                   borderRadius: BorderRadius.circular(16),
-//                 ),
-//                 child: Row(
-//                   children: [
-//                     Expanded(
-//                       child: RichText(
-//                         text: const TextSpan(
-//                           style: TextStyle(color: Colors.black),
-//                           children: [
-//                             TextSpan(text: "Starting from as low as:\n"),
-//                             TextSpan(
-//                               text: "UGX 3,000 ",
-//                               style: TextStyle(
-//                                 fontWeight: FontWeight.bold,
-//                                 fontSize: 18,
-//                                 color: purple,
-//                               ),
-//                             ),
-//                             TextSpan(text: "per kg"),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//                     ClipRRect(
-//                       borderRadius: BorderRadius.circular(12),
-//                       child: SizedBox(
-//                         height: 70,
-//                         width: 80,
-//                         child: Image.asset(
-//                           "images/folded.png",
-//                           fit: BoxFit.cover,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 26),
-
-//               const Text(
-//                 "Laundry at your convenience",
-//                 style: TextStyle(fontSize: 12),
-//               ),
-
-//               const SizedBox(height: 30),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ===================== QUICK ACTIONS =====================
-//   Widget _quickActionsRow(BuildContext context) {
-//     return SizedBox(
-//       height: 78,
-//       child: ListView(
-//         scrollDirection: Axis.horizontal,
-//         padding: const EdgeInsets.symmetric(horizontal: 16),
-//         children: [
-//           _quickItem(Icons.calendar_month, "Schedule Pickup",
-//               () => Navigator.pushNamed(context, "/schedule")),
-//           _quickItem(Icons.price_check, "View Prices",
-//               () => Navigator.pushNamed(context, "/pricing")),
-//           _quickItem(Icons.local_shipping, "Track Order",
-//               () => Navigator.pushNamed(context, "/track")),
-//           _quickItem(Icons.support_agent, "Contact Us",
-//               () => Navigator.pushNamed(context, "/support")),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _quickItem(IconData icon, String label, VoidCallback tap) {
-//     return GestureDetector(
-//       onTap: tap,
-//       child: Container(
-//         width: 110,
-//         margin: const EdgeInsets.only(right: 10),
-//         padding: const EdgeInsets.all(12),
-//         decoration: BoxDecoration(
-//           color: lightPurple,
-//           borderRadius: BorderRadius.circular(14),
-//         ),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Icon(icon, color: purple, size: 22),
-//             const SizedBox(height: 6),
-//             Text(label,
-//                 textAlign: TextAlign.center,
-//                 style: const TextStyle(fontSize: 11)),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ===================== BOTTOM NAV =====================
-//   Widget _bottomNav(BuildContext context) {
-//     return BottomNavigationBar(
-//       currentIndex: 0,
-//       type: BottomNavigationBarType.fixed,
-//       selectedItemColor: purple,
-//       onTap: (index) {
-//         if (index == 1) Navigator.pushNamed(context, "/orders");
-//         if (index == 2) Navigator.pushNamed(context, "/schedule");
-//         if (index == 3) Navigator.pushNamed(context, "/pricing");
-//       },
-//       items: const [
-//         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-//         BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: "Orders"),
-//         BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Schedule"),
-//         BottomNavigationBarItem(icon: Icon(Icons.price_check), label: "Pricing"),
-//       ],
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
 import '../widgets/how_protos_works.dart';
-import '/screens/payment_screen.dart';
+// import '/screens/orders_screen.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -518,7 +209,7 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                         SizedBox(width: 3),
                                         Text(
-                                          "Kulambiro · Mulaago",
+                                          "Kulambiro - Mulago areas",
                                           style: TextStyle(
                                             fontSize: 10,
                                             color: Colors.white70,
@@ -609,7 +300,7 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, "/track"),
+                        onTap: () => Navigator.pushNamed(context, "/orders"),
                         child: Container(
                           height: 50,
                           decoration: BoxDecoration(
@@ -776,7 +467,7 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: () =>
-                                  Navigator.pushNamed(context, "/pricing"),
+                                  Navigator.pushNamed(context, "/schedule"),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -787,7 +478,7 @@ class HomeScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
-                                  "View All Prices →",
+                                  "Book pickup →",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.white,
@@ -861,15 +552,15 @@ class HomeScreen extends StatelessWidget {
         "Schedule\nPickup",
         () => Navigator.pushNamed(context, "/schedule"),
       ),
-      _QuickItem(
-        Icons.price_check_rounded,
-        "View\nPrices",
-        () => Navigator.pushNamed(context, "/pricing"),
-      ),
+      // _QuickItem(
+      //   Icons.price_check_rounded,
+      //   "View\nPrices",
+      //   () => Navigator.pushNamed(context, "/notifications"),
+      // ),
       _QuickItem(
         Icons.local_shipping_rounded,
         "Track\nOrder",
-        () => Navigator.pushNamed(context, "/track"),
+        () => Navigator.pushNamed(context, "/orders"),
       ),
       _QuickItem(
         Icons.support_agent_rounded,
@@ -957,37 +648,21 @@ class HomeScreen extends StatelessWidget {
       unselectedLabelStyle: const TextStyle(fontSize: 11),
       elevation: 12,
       onTap: (index) {
-        if (index == 1) {
-          Navigator.pushNamed(
-            context,
-            '/payment',
-            arguments: OrderInvoice(
-              orderId: "12345",
-              pickupDate: "18 Feb 2026",
-              clientName: "Madrine",
-              clientAddress: "Ntinda",
-              clothingKg: 10,
-            ),
-          );
-        }
-
         if (index == 2) Navigator.pushNamed(context, "/schedule");
-        if (index == 3) Navigator.pushNamed(context, "/pricing");
-        // if (index == 4) Navigator.pushNamed(context, "/account");
+        if (index == 3) Navigator.pushNamed(context, "/notifications");
+        if (index == 1) Navigator.pushNamed(context, "/orders");
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: "Home"),
         BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: "Payment",
-        ),
+          icon: Icon(Icons.receipt_long_rounded), label: 'Orders'),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_month_rounded),
           label: "Schedule",
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.price_check_rounded),
-          label: "Pricing",
+          icon: Icon(Icons.notifications_rounded),
+          label: "Notifications",
         ),
         // BottomNavigationBarItem(
         //     icon: Icon(Icons.person_rounded), label: "Account"),
