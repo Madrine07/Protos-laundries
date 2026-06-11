@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_application_1/screens/track_order_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -20,6 +21,7 @@ import 'screens/home_screen.dart';
 import 'screens/order_invoice_id.dart';
 import 'screens/account_screen.dart';
 import 'screens/branches_screen.dart';
+
 
 // ← Must be at top level, outside everything
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -217,6 +219,7 @@ class MyApp extends StatelessWidget {
         '/account': (_) => const AccountScreen(),
         '/branches': (context) => const BranchesScreen(),
         '/support': (context) => const SupportScreen(),
+        '/track': (context) => const TrackOrderScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/payment') {
