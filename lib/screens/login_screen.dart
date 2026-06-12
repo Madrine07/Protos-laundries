@@ -1,12 +1,13 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, unused_field, deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/api_service.dart';
+import 'notification_badge.dart';
 import 'dart:developer';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,16 +17,27 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
+  static const Color purple = Color(0xFF6B21A8);
+  static const Color gold   = Color(0xFFD4AF37);
+
+  final TextEditingController emailController    = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  final ValueNotifier<bool> passwordVisible = ValueNotifier(false);
-  final ValueNotifier<bool> rememberMe = ValueNotifier(false);
-  final ValueNotifier<String?> errorMessage = ValueNotifier(null);
+  final GlobalKey<FormState>  _formKey           = GlobalKey<FormState>();
+  final ValueNotifier<bool>   passwordVisible    = ValueNotifier(false);
+  final ValueNotifier<bool>   rememberMe         = ValueNotifier(false);
+  final ValueNotifier<String?> errorMessage      = ValueNotifier(null);
 
   final ApiService api = ApiService();
+  bool _loading        = true;
+  bool _submitting     = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) setState(() => _loading = false);
+    });
+  }
 
   @override
   void dispose() {
@@ -38,261 +50,234 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _signIn() async {
-  errorMessage.value = null;
+    errorMessage.value = null;
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      errorMessage.value = 'Please fill all fields!';
+      return;
+    }
+    if (!_formKey.currentState!.validate()) return;
 
-  if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-    errorMessage.value = "Please fill all fields!";
-    return;
-  }
-
-  if (_formKey.currentState!.validate()) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
+    setState(() => _submitting = true);
     try {
       final response = await api.login(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
-
       if (!mounted) return;
-      Navigator.of(context).pop();
 
-      // ── Save token and user info always ──────────────
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', response['token']);
       await prefs.setString('user_role', response['user']['role'] ?? 'customer');
       await prefs.setInt('user_id', response['user']['id']);
 
-      // ── Save FCM token to backend now that we're logged in ──
       final fcmToken = prefs.getString('fcm_token_temp');
       if (fcmToken != null) {
         await _saveFcmTokenToBackend(fcmToken, response['token']);
       }
 
-      final userRole = response["user"]["role"] ?? "customer";
-      log("User logged in with role: $userRole");
+      // Refresh badge after login
+      await NotificationBadge.refresh();
 
+      log('User logged in with role: ${response['user']['role']}');
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
       errorMessage.value = e.toString();
-      log("Login error: $e", name: "LoginScreen");
+      log('Login error: $e', name: 'LoginScreen');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
-}
 
-Future<void> _saveFcmTokenToBackend(String fcmToken, String authToken) async {
-  try {
-    await http.post(
-      Uri.parse('http://127.0.0.1:8000/api/update-fcm-token'),
-      headers: {
-        'Authorization': 'Bearer $authToken',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({'fcm_token': fcmToken}),
-    );
-  } catch (e) {
-    log('FCM token save error: $e');
+  Future<void> _saveFcmTokenToBackend(String fcmToken, String authToken) async {
+    try {
+      await http.post(
+        Uri.parse('http://127.0.0.1:8000/api/update-fcm-token'),
+        headers: {'Authorization': 'Bearer $authToken', 'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: jsonEncode({'fcm_token': fcmToken}),
+      );
+    } catch (e) {
+      log('FCM token save error: $e');
+    }
   }
-}
+
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE5E7EB),
+      highlightColor: const Color(0xFFF9FAFB),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            Container(width: 180, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8))),
+            const SizedBox(height: 8),
+            Container(width: 260, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(7))),
+            const SizedBox(height: 40),
+            Container(width: double.infinity, height: 56, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
+            const SizedBox(height: 16),
+            Container(width: double.infinity, height: 56, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Container(width: 110, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+              Container(width: 110, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+            ]),
+            const SizedBox(height: 24),
+            Container(width: double.infinity, height: 52, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F7FF),
       body: SafeArea(
         child: Column(
           children: [
-            // --- Header ---
+            // ── Header ──
             Container(
-              height: 120,
               width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF673AB7), Color(0xFF9C27B0)],
-                ),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                gradient: LinearGradient(colors: [Color(0xFF6B21A8), Color(0xFF8B5CF6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 55,
-                    height: 55,
-                    child: Image.asset('images/final-no-background.png'),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'WELCOME ABOARD!',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  SizedBox(width: 50, height: 50, child: Image.asset('images/final-no-background.png')),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Welcome Back!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                      Text('Sign in to continue', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7))),
+                    ],
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 60), // moves form slightly down
-
-            // --- Form ---
+            // ── Body ──
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Error Message
-                      ValueListenableBuilder<String?>(
-                        valueListenable: errorMessage,
-                        builder: (context, value, _) {
-                          if (value == null) return const SizedBox();
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(
-                              value,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Email & Password Fields
-                      _buildTextField("Email", Icons.email_outlined, emailController),
-                      const SizedBox(height: 16),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: passwordVisible,
-                        builder: (context, visible, _) {
-                          return _buildTextField(
-                            "Password",
-                            Icons.lock_outline,
-                            passwordController,
-                            obscureText: !visible,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                visible ? Icons.visibility : Icons.visibility_off,
-                                color: Colors.deepPurple,
-                              ),
-                              onPressed: () {
-                                passwordVisible.value = !passwordVisible.value;
+              child: _loading
+                  ? _buildShimmer()
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 36, 24, 24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Error
+                            ValueListenableBuilder<String?>(
+                              valueListenable: errorMessage,
+                              builder: (context, value, _) {
+                                if (value == null) return const SizedBox();
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFFECACA)),
+                                  ),
+                                  child: Row(children: [
+                                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
+                                    const SizedBox(width: 8),
+                                    Expanded(child: Text(value, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w500))),
+                                  ]),
+                                );
                               },
                             ),
-                          );
-                        },
-                      ),
 
-                      const SizedBox(height: 8),
+                            // Email
+                            _buildField('Email Address', Icons.email_outlined, emailController, keyboard: TextInputType.emailAddress),
+                            const SizedBox(height: 16),
 
-                      // --- Remember Me + Forgot Password ---
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Remember Me
-                          ValueListenableBuilder<bool>(
-                            valueListenable: rememberMe,
-                            builder: (context, value, _) {
-                              return Row(
-                                children: [
-                                  SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: Checkbox(
-                                      value: value,
-                                      onChanged: (v) {
-                                        rememberMe.value = v ?? false;
-                                      },
-                                      activeColor: Colors.deepPurple,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
+                            // Password
+                            ValueListenableBuilder<bool>(
+                              valueListenable: passwordVisible,
+                              builder: (context, visible, _) {
+                                return _buildField('Password', Icons.lock_outline, passwordController,
+                                  obscure: !visible,
+                                  suffix: IconButton(
+                                    icon: Icon(visible ? Icons.visibility : Icons.visibility_off, color: purple, size: 20),
+                                    onPressed: () => passwordVisible.value = !passwordVisible.value,
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    "Remember Me",
-                                    style: TextStyle(
-                                      fontSize: 12, // smaller font
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            ),
 
-                          // Forgot Password
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/password');
-                            },
-                            child: const Text(
-                              "Forgot Password?",
-                              style: TextStyle(
-                                fontSize: 12, // smaller font
-                                color: Colors.deepPurple,
+                            const SizedBox(height: 12),
+
+                            // Remember me + Forgot password
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: rememberMe,
+                                  builder: (context, value, _) {
+                                    return Row(children: [
+                                      SizedBox(
+                                        width: 18, height: 18,
+                                        child: Checkbox(
+                                          value: value,
+                                          onChanged: (v) => rememberMe.value = v ?? false,
+                                          activeColor: purple,
+                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Text('Remember Me', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                                    ]);
+                                  },
+                                ),
+                                GestureDetector(
+                                  onTap: () => Navigator.pushNamed(context, '/password'),
+                                  child: const Text('Forgot Password?', style: TextStyle(fontSize: 12, color: purple, fontWeight: FontWeight.w600)),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Sign in button
+                            SizedBox(
+                              width: double.infinity, height: 52,
+                              child: ElevatedButton(
+                                onPressed: _submitting ? null : _signIn,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: purple,
+                                  disabledBackgroundColor: purple.withOpacity(0.6),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                                child: _submitting
+                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Text('Sign In', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
 
-                      const SizedBox(height: 16),
+                            const SizedBox(height: 16),
 
-                      // Sign In Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _signIn,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            // Sign up link
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text("Don't have an account?", style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                                GestureDetector(
+                                  onTap: () => Navigator.pushNamed(context, '/register'),
+                                  child: const Text(' Sign Up', style: TextStyle(fontSize: 13, color: purple, fontWeight: FontWeight.w700)),
+                                ),
+                              ],
                             ),
-                          ),
-                          child: const Text(
-                            "Sign In",
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          ],
                         ),
                       ),
-
-                      const SizedBox(height: 12),
-
-                      // Sign Up link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("Don't have an account?"),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/register');
-                            },
-                            child: const Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: Colors.deepPurple,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ],
         ),
@@ -300,26 +285,22 @@ Future<void> _saveFcmTokenToBackend(String fcmToken, String authToken) async {
     );
   }
 
-  // --- Text Field Helper ---
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller,
-      {bool obscureText = false, Widget? suffixIcon}) {
+  Widget _buildField(String label, IconData icon, TextEditingController controller,
+      {bool obscure = false, Widget? suffix, TextInputType keyboard = TextInputType.text}) {
     return TextFormField(
       controller: controller,
-      obscureText: obscureText,
+      obscureText: obscure,
+      keyboardType: keyboard,
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.deepPurple),
-        filled: true,
-        fillColor: Colors.grey[200],
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
-        ),
-        suffixIcon: suffixIcon,
+        hintText: label,
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+        prefixIcon: Icon(icon, color: purple, size: 20),
+        suffixIcon: suffix,
+        filled: true, fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEDE9F6))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: purple, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
