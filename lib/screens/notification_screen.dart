@@ -58,7 +58,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (token == null) throw Exception('Not logged in');
 
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/notifications'),
+        Uri.parse('https://protos.dina-apartments.com/api/notifications'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -90,7 +90,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (token == null) throw Exception('Not logged in');
 
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/promotions'),
+        Uri.parse('https://protos.dina-apartments.com/api/promotions'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -120,7 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (token == null) return;
 
       await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/notifications/$id/read'),
+        Uri.parse('https://protos.dina-apartments.com/api/notifications/$id/read'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

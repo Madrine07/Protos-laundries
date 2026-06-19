@@ -56,8 +56,8 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
       final token = await _getToken();
       if (token == null) throw Exception('Not logged in');
       final Uri url = widget.orderId != null
-          ? Uri.parse('http://127.0.0.1:8000/api/orders/${widget.orderId}')
-          : Uri.parse('http://127.0.0.1:8000/api/orders');
+          ? Uri.parse('https://protos.dina-apartments.com/api/orders/${widget.orderId}')
+          : Uri.parse('https://protos.dina-apartments.com/api/orders');
       final response = await http.get(url, headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
       final data = jsonDecode(response.body);
       if (!mounted) return;

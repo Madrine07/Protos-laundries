@@ -183,7 +183,7 @@ Future<void> _saveFcmToken(String token) async {
     if (authToken == null) return;
 
     final response = await http.post(
-      Uri.parse('http://127.0.0.1:8000/api/update-fcm-token'),
+      Uri.parse('https://protos.dina-apartments.com/api/update-fcm-token'),
       headers: {
         'Authorization': 'Bearer $authToken',
         'Content-Type': 'application/json',

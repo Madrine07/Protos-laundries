@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveFcmTokenToBackend(String fcmToken, String authToken) async {
     try {
       await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/update-fcm-token'),
+        Uri.parse('https://protos.dina-apartments.com/api/update-fcm-token'),
         headers: {'Authorization': 'Bearer $authToken', 'Content-Type': 'application/json', 'Accept': 'application/json'},
         body: jsonEncode({'fcm_token': fcmToken}),
       );

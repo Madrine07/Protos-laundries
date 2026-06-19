@@ -129,7 +129,7 @@ class _SchedulePickupScreenState extends State<SchedulePickupScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       if (token == null) return;
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/profile'),
+      final response = await http.get(Uri.parse('https://protos.dina-apartments.com/api/profile'),
           headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

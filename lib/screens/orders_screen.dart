@@ -42,7 +42,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       if (token == null) throw Exception('Not logged in');
 
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/my-orders'),
+        Uri.parse('https://protos.dina-apartments.com/api/my-orders'),
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
 

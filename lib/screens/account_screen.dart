@@ -19,7 +19,7 @@ class _AccountScreenState extends State<AccountScreen> {
   static const Color purple      = Color(0xFF6B21A8);
   static const Color gold        = Color(0xFFD4AF37);
   static const Color lightPurple = Color(0xFFF3E8FF);
-  static const String baseUrl    = 'http://127.0.0.1:8000/api';
+  static const String baseUrl    = 'https://protos.dina-apartments.com/api';
 
   Map<String, dynamic>? _user;
   bool _loading        = true;
@@ -268,7 +268,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       final token = await _getToken();
       if (token != null) {
-        await http.post(Uri.parse('$baseUrl/auth/logout'),
+        await http.post(Uri.parse('$baseUrl/api/auth/logout'),
             headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'});
       }
     } finally {

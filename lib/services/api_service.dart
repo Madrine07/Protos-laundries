@@ -4,12 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class ApiService {
-      final String baseUrl = "http://127.0.0.1:8000/api";
+      final String baseUrl = 'https://protos.dina-apartments.com';
 
       // --- Login method ---
       Future<Map<String, dynamic>> login(String email, String password) async {
         final response = await http.post(
-          Uri.parse("$baseUrl/auth/login"),
+          Uri.parse("$baseUrl/api/auth/login"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"email": email, "password": password}),
         );
@@ -32,7 +32,7 @@ class ApiService {
         required String password,
       }) async {
         final response = await http.post(
-          Uri.parse("$baseUrl/auth/register/request-otp"),
+          Uri.parse("$baseUrl/api/auth/register/request-otp"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"name": name, "email": email, "password": password}),
         );
@@ -51,7 +51,7 @@ class ApiService {
         required String otp,
       }) async {
         final response = await http.post(
-          Uri.parse("$baseUrl/auth/register/verify-otp"),
+          Uri.parse("$baseUrl/api/auth/register/verify-otp"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "name": name,
@@ -76,7 +76,7 @@ class ApiService {
       // --- Resend OTP ---
       Future<void> resendOtp({required String email}) async {
         final response = await http.post(
-          Uri.parse("$baseUrl/auth/register/resend-otp"),
+          Uri.parse("$baseUrl/api/auth/register/resend-otp"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"email": email}),
         );
@@ -90,7 +90,7 @@ class ApiService {
       // --- Send OTP for password recovery ---
       Future<void> sendPasswordRecoveryOtp(String email) async {
         final response = await http.post(
-          Uri.parse("$baseUrl/auth/password/request-otp"),
+          Uri.parse("$baseUrl/api/auth/password/request-otp"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"email": email}),
         );
@@ -107,7 +107,7 @@ class ApiService {
       required String otp,
     }) async {
       final response = await http.post(
-        Uri.parse("$baseUrl/auth/password/verify-otp"),
+        Uri.parse("$baseUrl/api/auth/password/verify-otp"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
@@ -130,7 +130,7 @@ class ApiService {
       required String confirmPassword,
     }) async {
       final response = await http.post(
-        Uri.parse("$baseUrl/auth/password/reset"),
+        Uri.parse("$baseUrl/api/auth/password/reset"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
